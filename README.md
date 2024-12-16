@@ -10,7 +10,7 @@ This is a wrapper for the [LPAC](https://github.com/estkme-group/lpac), to manag
   * Define environment variables with `.env` file
 - Run `lpac-routeros-wrapper chip info`
 
-# Usage with EasyLPAC
+# Usage with other applications calling `lpac` command (ex. EasyLPAC)
 - Download and extract [EasyLPAC](https://github.com/creamlike1024/EasyLPAC/releases)
 - Download and extract [lpac-routeros-wrapper](https://github.com/pccr10001/lpac-routeros-wrapper/releases)
 - Rename `lpac` in `EasyLPAC` directory to `lpac.orig`
