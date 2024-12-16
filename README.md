@@ -15,7 +15,7 @@ This is a wrapper for the [LPAC](https://github.com/estkme-group/lpac), to manag
 - Download and extract [lpac-routeros-wrapper](https://github.com/pccr10001/lpac-routeros-wrapper/releases)
 - Rename `lpac` in `EasyLPAC` directory to `lpac.orig`
 - Copy `lpac-routeros-wrapper` to EasyLPAC
-- Rename `lpac-fibocom-wrapper` to `lpac`
+- Rename `lpac-routeros-wrapper` to `lpac`
 - Set environment variables for RouterOS connection.
     * Define environment variables with bash (`export`) or cmd (`set`)3
     * Define environment variables with `.env` file
