@@ -27,11 +27,12 @@ This is a wrapper for the [LPAC](https://github.com/estkme-group/lpac), to manag
 * Only MBIM mode is supported in RouterOS
   * This program uses `at-chat` command in RouterOS
   * For modules that supported in MBIM mode:
-    * (*Tested*) Quectel EC20 / EC21 / EC25 / EC200
+    * (*Tested*) ✔️ Quectel EC20 / EC21 / EC25
       * `AT+QCFG="usbnet",2` to switch into MBIM mode
-    * (*Tested*) Fibocom L850-GL
+    * (*Tested*) ✔️ Fibocom L850-GL
       * See [xmm7360_usb](https://github.com/xmm7360/xmm7360-usb-modeswitch)
-    * TBD
+    * (*Tested*) ❌️ Quectel EC200
+      * No `at-chat` in MBIM mode
 
 # Reference
 * [lpac-fibocom-wrapper](https://github.com/prusa-dev/lpac-fibocom-wrapper)
