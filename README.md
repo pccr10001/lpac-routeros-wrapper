@@ -31,8 +31,9 @@ This is a wrapper for the [LPAC](https://github.com/estkme-group/lpac), to manag
       * `AT+QCFG="usbnet",2` to switch into MBIM mode
     * (*Tested*) ✔️ Fibocom L850-GL
       * See [xmm7360_usb](https://github.com/xmm7360/xmm7360-usb-modeswitch)
+    * (*Tested*) ✔️ Foxconn T99W175 (SDX55)
+      * `AT+USBSWITCH=90D5` to enable MBIM mode, see [4pda](https://4pda.to/forum/index.php?showtopic=1086317&st=280#entry129369127)
     * (*Tested*) ❌️ Quectel EC200
       * No `at-chat` in MBIM mode
-
 # Reference
 * [lpac-fibocom-wrapper](https://github.com/prusa-dev/lpac-fibocom-wrapper)
