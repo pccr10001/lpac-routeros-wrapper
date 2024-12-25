@@ -46,8 +46,11 @@ type Interface struct {
 var rosClient *routeros.Client
 var cchoRegex = regexp.MustCompile("\\+CCHO:\\s?(\\d+)")
 var cglaRegex = regexp.MustCompile("\\+CGLA:\\s?(\\d+),(\\S+)")
+var csimRegex = regexp.MustCompile("\\+CSIM:\\s?(\\d+),\"(\\S+)\"")
 
 var sessionId = -1
+
+var useCSIM = false
 
 func sendATCommand(cmd string) string {
 	return sendATCommandToDev(cmd, os.Getenv("DEVICE_IFID"))
@@ -224,29 +227,65 @@ func main() {
 			switch req.Payload.Func {
 			case "connect":
 				*resp.Payload.ECode = 0
-				sendATCommand("AT+CCHC=1")
-				sendATCommand("AT+CCHC=2")
-				sendATCommand("AT+CCHC=3")
-				sendATCommand("AT+CCHC=4")
+				atResp := sendATCommand("AT+CCHO=?")
+				if strings.LastIndex(atResp, "ERROR") > -1 {
+					useCSIM = true
+					sendATCommand("AT+CSIM=10,\"0070800100\"")
+				} else {
+					sendATCommand("AT+CCHC=1")
+					sendATCommand("AT+CCHC=2")
+					sendATCommand("AT+CCHC=3")
+					sendATCommand("AT+CCHC=4")
+				}
 			case "disconnect":
 				*resp.Payload.ECode = 0
 			case "logic_channel_close":
-				sendATCommand("AT+CCHC=" + req.Payload.Param.(string))
+				if useCSIM {
+					sendATCommand("AT+CSIM=10,\"0070800100\"")
+				} else {
+					sendATCommand("AT+CCHC=" + req.Payload.Param.(string))
+				}
 			case "transmit":
-				apdu := req.Payload.Param.(string)
-				atResp := sendATCommand(fmt.Sprintf("AT+CGLA=%d,%d,\"%s\"", sessionId, len(apdu), apdu))
-				cglaResp := cglaRegex.FindAllStringSubmatch(atResp, -1)
-				*resp.Payload.ECode = sessionId
-				resp.Payload.Data = strings.Replace(cglaResp[0][2], "\"", "", -1)
+				apdu := strings.ToUpper(req.Payload.Param.(string))
+				if useCSIM {
+					atResp := sendATCommand(fmt.Sprintf("AT+CSIM=%d,\"%s\"", len(apdu), apdu))
+					csimResp := csimRegex.FindAllStringSubmatch(atResp, -1)
+					*resp.Payload.ECode = 1
+					resp.Payload.Data = strings.Replace(csimResp[0][2], "\"", "", -1)
+				} else {
+					atResp := sendATCommand(fmt.Sprintf("AT+CGLA=%d,%d,\"%s\"", sessionId, len(apdu), apdu))
+					cglaResp := cglaRegex.FindAllStringSubmatch(atResp, -1)
+					*resp.Payload.ECode = sessionId
+					resp.Payload.Data = strings.Replace(cglaResp[0][2], "\"", "", -1)
+				}
 
 			case "logic_channel_open":
-				atResp := sendATCommand("AT+CCHO=\"" + req.Payload.Param.(string) + "\"")
-				if strings.LastIndex(atResp, "ERROR") > 0 {
-					panic("failed to open logic sessionId, resp=" + atResp)
+				if useCSIM {
+					atResp := sendATCommand("AT+CSIM=10,\"0070000000\"")
+					if strings.LastIndex(atResp, "ERROR") > -1 {
+						panic("failed to open logical channel, " + atResp)
+					}
+					csimResp := csimRegex.FindAllStringSubmatch(atResp, -1)
+					l, _ := strconv.Atoi(csimResp[0][1])
+					if csimResp[0][2][l-4:l] == "9000" {
+						sessionId, _ = strconv.Atoi(csimResp[0][2][0:2])
+						*resp.Payload.ECode = sessionId
+					} else {
+						panic("failed to open logical channel, " + atResp)
+					}
+					// select applet
+					atResp = sendATCommand(fmt.Sprintf("AT+CSIM=42,\"%02XA4040010A0000005591010FFFFFFFF8900000100\"", sessionId))
+
+				} else {
+					atResp := sendATCommand("AT+CCHO=\"" + req.Payload.Param.(string) + "\"")
+					if strings.LastIndex(atResp, "ERROR") > -1 {
+						panic("failed to open logical channel")
+					}
+					cchoResp := cchoRegex.FindAllStringSubmatch(atResp, -1)
+					sessionId, _ = strconv.Atoi(cchoResp[0][1])
+					*resp.Payload.ECode = sessionId
 				}
-				cchoResp := cchoRegex.FindAllStringSubmatch(atResp, -1)
-				sessionId, _ = strconv.Atoi(cchoResp[0][1])
-				*resp.Payload.ECode = sessionId
+
 			}
 
 			respJson, _ := json.Marshal(resp)
